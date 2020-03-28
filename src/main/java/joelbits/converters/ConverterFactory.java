@@ -9,7 +9,7 @@ public final class ConverterFactory {
 
     private ConverterFactory() {}
 
-    static Converter getConverter(File file) throws ConverterNotFoundException {
+    public static Converter getConverter(File file) throws ConverterNotFoundException {
         String extension = file.getName().substring(file.getName().lastIndexOf("."));
         switch (Formats.valueOf(extension)) {
             case PDF:

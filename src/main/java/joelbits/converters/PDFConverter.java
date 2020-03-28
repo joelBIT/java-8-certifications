@@ -33,8 +33,6 @@ public class PDFConverter implements Converter {
         try (PDDocument pdf = PDDocument.load(file); Writer output = new PrintWriter("src/output/pdf.html", "utf-8")) {
             new PDFDomTree().writeText(pdf, output);
 
-        } catch (FileNotFoundException e) {
-            System.out.println("Could not find " + file.getName());
         } catch (IOException | ParserConfigurationException e) {
             System.out.println("Conversion failed due to " + e.getMessage());
         }

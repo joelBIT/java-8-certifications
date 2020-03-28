@@ -1,15 +1,19 @@
 package joelbits;
 
+import joelbits.converters.Converter;
+import joelbits.converters.ConverterFactory;
+import joelbits.exception.ConverterNotFoundException;
 import org.apache.commons.cli.*;
 
 import java.io.Console;
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import static joelbits.ConverterOptions.*;
+
 public class Main {
-    private static final String EXIT = "exit";
-    private static final String HELP = "help";
-    private static final String LANGUAGE = "lang";
     private static final String BUNDLE_PROPERTIES = "AppText";
     private static final String BUNDLE_JAVA = "joelbits.properties." + BUNDLE_PROPERTIES;
 
@@ -42,11 +46,20 @@ public class Main {
                     formatter.printHelp("fileConverter", options);
                 }
                 if (cmd.hasOption(LANGUAGE)) {
-                    Locale locale = new Locale(cmd.getOptionValue("lang"));
+                    Locale locale = new Locale(cmd.getOptionValue(LANGUAGE));
                     resourceBundle = ResourceBundle.getBundle(BUNDLE_PROPERTIES, locale);
+                }
+                if (cmd.hasOption(CONVERT) && cmd.hasOption(FORMAT)) {
+
+                    File file = new File(cmd.getOptionValue(CONVERT));
+
+                    Converter converter = ConverterFactory.getConverter(file);
+                    converter.convert(file, cmd.getOptionValue(FORMAT));
                 }
             } catch (ParseException e) {
                 System.out.println(resourceBundle.getString("parse_error") + e.getMessage());
+            } catch (ConverterNotFoundException e) {
+                System.out.println(e.getMessage());
             }
         }
     }
