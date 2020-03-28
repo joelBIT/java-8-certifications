@@ -1,8 +1,10 @@
 package joelbits.converters;
 
+import java.io.File;
+
 public class TXTConverter implements Converter {
     @Override
-    public byte[] convert() {
-        return new byte[0];
+    public void convert(File file, String format) {
+
     }
 }

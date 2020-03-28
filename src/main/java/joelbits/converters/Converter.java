@@ -1,5 +1,7 @@
 package joelbits.converters;
 
+import java.io.File;
+
 public interface Converter {
-    byte[] convert();
+    void convert(File file, String format);
 }

@@ -1,4 +1,7 @@
-package joelbits;
+package joelbits.exception;
 
-public class ConverterNotFoundException {
+public class ConverterNotFoundException extends Exception {
+    public ConverterNotFoundException(String message) {
+        super(message);
+    }
 }
