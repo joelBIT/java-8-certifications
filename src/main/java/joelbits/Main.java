@@ -3,12 +3,11 @@ package joelbits;
 import joelbits.converters.Converter;
 import joelbits.converters.ConverterFactory;
 import joelbits.exception.ConverterNotFoundException;
-import joelbits.properties.DatabaseProperties;
+import joelbits.utils.DatabaseUtil;
 import org.apache.commons.cli.*;
 
 import java.io.Console;
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -19,9 +18,9 @@ public class Main {
     private static final String BUNDLE_JAVA = "joelbits.properties." + BUNDLE_PROPERTIES;
 
     public static void main(String[] args) {
+        DatabaseUtil databaseUtil = null;
         try {
-            Object clazz = Class.forName("org.apache.derby.jdbc.EmbeddedDriver");
-            DatabaseProperties databaseProperties = new DatabaseProperties();
+            databaseUtil = DatabaseUtil.getInstance();
         } catch (Exception e) {
             System.out.println("Could not connect to database: " + e.getMessage());
         }

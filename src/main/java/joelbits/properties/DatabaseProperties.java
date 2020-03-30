@@ -1,30 +1,35 @@
 package joelbits.properties;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 public class DatabaseProperties {
     private final Properties properties = new Properties();
     private static final String CONFIGURATION_FILE = "database.properties";
+    private static final String USER = "user";
+    private static final String PASSWORD = "password";
+    private static final String DATABASE = "database";
+    private static final String CREATE_DATABASE = ";create=true";
 
     public DatabaseProperties() throws Exception {
         try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(CONFIGURATION_FILE)) {
             properties.load(inputStream);
-        } catch (IOException e) {
-            System.out.println("Could not find properties file " + CONFIGURATION_FILE);
         }
     }
 
-    public String getURL() {
-        return properties.getProperty("url");
+    public String getDatabaseName() {
+        return properties.getProperty(DATABASE);
     }
 
     public String getUsername() {
-        return properties.getProperty("user");
+        return properties.getProperty(USER);
     }
 
     public String getPassword() {
-        return properties.getProperty("password");
+        return properties.getProperty(PASSWORD);
+    }
+
+    public String getURL() {
+        return getDatabaseName() + ";" + USER + "=" + getUsername() + ";" + PASSWORD + "=" + getPassword() + CREATE_DATABASE;
     }
 }
