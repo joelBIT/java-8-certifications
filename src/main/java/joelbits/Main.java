@@ -2,12 +2,13 @@ package joelbits;
 
 import joelbits.converters.Converter;
 import joelbits.converters.ConverterFactory;
-import joelbits.exception.ConverterNotFoundException;
 import joelbits.utils.DatabaseUtil;
 import org.apache.commons.cli.*;
 
 import java.io.Console;
 import java.io.File;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -62,9 +63,15 @@ public class Main {
                     Converter converter = ConverterFactory.getConverter(file);
                     converter.convert(file, cmd.getOptionValue(FORMAT));
                 }
+                if (cmd.hasOption(LIST)) {
+                    databaseUtil.listAllFiles();
+                }
+
+                String query = "INSERT INTO FILECONVERTER.FILES(NAME, SIZE, FORMAT, CONVERTED) VALUES ('filename2.txt', 1234.3, 'PDF', '" + Timestamp.valueOf(LocalDateTime.now()) + "')";
+                databaseUtil.executeQuery(query);
             } catch (ParseException e) {
                 System.out.println(resourceBundle.getString("parse_error") + e.getMessage());
-            } catch (ConverterNotFoundException e) {
+            } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
         }
