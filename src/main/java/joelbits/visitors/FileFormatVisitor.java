@@ -9,18 +9,31 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Adds files in the current directory, and its subdirectories, to the list of absolute paths when having the supplied
+ * format(s) (or extension, that is).
+ *
+ */
 public class FileFormatVisitor extends SimpleFileVisitor<Path> {
-    private final String format;
+    private final List<String> formats;
     private final List<String> paths;
 
-    public FileFormatVisitor(String format) {
-        this.format = format;
+    {
         paths = new ArrayList<>();
+        formats = new ArrayList<>();
+    }
+
+    public FileFormatVisitor(List<String> formats) {
+        this.formats.addAll(formats);
+        this.formats.replaceAll(String::toLowerCase);
     }
 
     @Override
     public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-        if (file.getFileName().toString().endsWith("." + format)) {
+        String fileName = file.getFileName().toString();
+        String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+        System.out.println("filename " + fileName);
+        if (formats.stream().anyMatch(f -> f.endsWith(extension))) {
             paths.add(file.toAbsolutePath().toString());
         }
 

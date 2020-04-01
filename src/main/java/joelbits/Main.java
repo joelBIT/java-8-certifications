@@ -2,11 +2,16 @@ package joelbits;
 
 import joelbits.converters.Converter;
 import joelbits.converters.ConverterFactory;
+import joelbits.formats.Formats;
 import joelbits.utils.DatabaseUtil;
+import joelbits.visitors.FileFormatVisitor;
 import org.apache.commons.cli.*;
 
 import java.io.Console;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -40,7 +45,7 @@ public class Main {
         ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE_JAVA);
         System.out.println(resourceBundle.getString("start"));
 
-        while(true) {
+        while (true) {
             try {
                 String[] input = console.readLine(resourceBundle.getString("input")).split("\\s+");
                 cmd = parser.parse(options, input);
@@ -56,24 +61,93 @@ public class Main {
                     Locale locale = new Locale(cmd.getOptionValue(LANGUAGE));
                     resourceBundle = ResourceBundle.getBundle(BUNDLE_PROPERTIES, locale);
                 }
+                if (cmd.hasOption(CONVERT) && !cmd.hasOption(FORMAT)) {
+                    System.out.println("You must add a desired --format for the converted file(s)");
+                }
                 if (cmd.hasOption(CONVERT) && cmd.hasOption(FORMAT)) {
 
-                    File file = new File(cmd.getOptionValue(CONVERT));
+                    try {
+                        Formats.valueOf(cmd.getOptionValue(FORMAT).toUpperCase());
+                    } catch (Exception e) {
+                        System.out.println("Supplied format is not supported. Type -formats to see which formats are supported.");
+                        continue;
+                    }
 
-                    Converter converter = ConverterFactory.getConverter(file);
-                    converter.convert(file, cmd.getOptionValue(FORMAT));
+                    // Use a BufferedReader(FileReader( for retrieving sql queries from *.sql files??
+                    // Use StreamReaders/Writers for file conversion??
+
+                    String convertArgument = cmd.getOptionValue(CONVERT);
+                    Path path = null;
+                    try {
+                        path = Paths.get(convertArgument);
+                    } catch (InvalidPathException e) {
+                        System.out.println(path + " is not a valid path");
+                        continue;
+                    }
+
+                    if (!(Files.isRegularFile(path) || Files.isDirectory(path))) {
+                        System.out.println(path.toAbsolutePath() + " is not a file nor a directory!");
+                        continue;
+                    }
+
+                    if (!Files.exists(Paths.get(System.getProperty("user.dir") + "/converted"))) {
+                        Files.createDirectory(Paths.get(System.getProperty("user.dir") + "/converted"));
+                    }
+
+                    String format = cmd.getOptionValue(FORMAT);
+                    if (Files.isRegularFile(path)) {
+                        Converter converter = ConverterFactory.getConverter(path);
+                        converter.convert(path, cmd.getOptionValue(FORMAT));
+                        databaseUtil.executeQuery(createInsertQuery(path, format));
+
+                        continue;
+                    }
+
+                    if (Files.isDirectory(path)) {
+                        FileFormatVisitor visitor = new FileFormatVisitor(Formats.getFormats());
+                        Files.walkFileTree(Paths.get(System.getProperty("user.dir") + "/converted"), visitor);
+                        System.out.println(visitor.getPaths());
+
+                        // Convert all files to the supplied format value
+
+                        //Converter converter = ConverterFactory.getConverter(path);
+                        // Use Concurrent API to enable parallel conversion of files.
+                        //converter.convert(file, cmd.getOptionValue(FORMAT));
+
+
+                        databaseUtil.executeQuery(createInsertQuery(path, format));
+                        continue;
+                    }
+                    if ("all".equalsIgnoreCase(convertArgument)) {
+                        // Convert all files with desired (and supported) format (both in current directory and subdirectories).
+                        // Use Concurrent API to enable parallel conversion of files.
+                        continue;
+                    }
                 }
                 if (cmd.hasOption(LIST)) {
                     databaseUtil.listAllFiles();
+                    continue;
                 }
 
-                String query = "INSERT INTO FILECONVERTER.FILES(NAME, SIZE, FORMAT, CONVERTED) VALUES ('filename2.txt', 1234.3, 'PDF', '" + Timestamp.valueOf(LocalDateTime.now()) + "')";
-                databaseUtil.executeQuery(query);
+                Path test = Paths.get(System.getProperty("user.dir"));
+                String[] files = test.toFile().list();
+                for (String file : files) {
+                    System.out.println(file);
+                }
+
             } catch (ParseException e) {
                 System.out.println(resourceBundle.getString("parse_error") + e.getMessage());
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
         }
+    }
+
+    private static String createInsertQuery(Path file, String format) {
+        return "INSERT INTO FILECONVERTER.FILES(NAME, SIZE, FORMAT, CONVERTED) VALUES ('" +
+                                file.getFileName() +
+                                "', 1234.3, '" +
+                                format + "', '" +
+                                Timestamp.valueOf(LocalDateTime.now()) + "')";
     }
 }

@@ -1,7 +1,7 @@
 package joelbits.converters;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public interface Converter {
-    void convert(File file, String format);
+    void convert(Path file, String format) throws Exception;
 }
