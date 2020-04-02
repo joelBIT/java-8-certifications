@@ -1,5 +1,6 @@
 package joelbits.converters;
 
+import joelbits.entities.ConvertedFile;
 import joelbits.formats.Formats;
 import org.apache.pdfbox.cos.COSDocument;
 import org.apache.pdfbox.io.RandomAccessBuffer;
@@ -11,19 +12,20 @@ import sun.misc.IOUtils;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 
 /**
  * Converts PDF documents to supplied format, if supported.
  */
 public class PDFConverter implements Converter {
     @Override
-    public void convert(Path file, String format) throws Exception {
+    public ConvertedFile convert(String path, String format) throws Exception {
+        File file = Paths.get(path).toFile();
 
         switch(Formats.valueOf(format.toUpperCase())) {
             case HTML:
-                toHTML(file.toFile());
+                toHTML(file);
                 break;
             case DOC:
             case TXT:
@@ -34,9 +36,10 @@ public class PDFConverter implements Converter {
                 break;
             default:
                 System.out.println("Converting PDF to format " + format + " is not supported");
-
         }
 
+        System.out.println("Finished conversion");
+        return new ConvertedFile(file.getName(), format, file.getTotalSpace(), LocalDateTime.now());
     }
 
     private void toHTML(File file) {
@@ -48,14 +51,16 @@ public class PDFConverter implements Converter {
         }
     }
 
-    private void toTXT(Path file) throws IOException {
+    private void toTXT(File file) throws IOException {
         System.out.println("In TXT");
-        try (FileInputStream inputStream = new FileInputStream(file.toFile())) {
+        try (FileInputStream inputStream = new FileInputStream(file)) {
             byte[] fileData = IOUtils.readAllBytes(inputStream);
             PDFParser parser = new PDFParser(new RandomAccessBuffer(fileData));
             parser.parse();
 
-            try (COSDocument document = parser.getDocument(); PrintWriter writer = new PrintWriter(Paths.get(System.getProperty("user.dir") + "/converted/testing.txt").toAbsolutePath().toString(), "utf-8"); PDDocument pdf = new PDDocument(document)) {
+            try (COSDocument document = parser.getDocument(); PrintWriter writer = new PrintWriter(Paths
+                    .get(System.getProperty("user.dir") + "/converted/testing.txt")
+                    .toAbsolutePath().toString(), "utf-8"); PDDocument pdf = new PDDocument(document)) {
                 PDFTextStripper pdfStripper = new PDFTextStripper();
                 String parsedText = pdfStripper.getText(pdf);
                 writer.print(parsedText);

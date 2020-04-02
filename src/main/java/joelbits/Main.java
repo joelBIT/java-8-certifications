@@ -1,8 +1,9 @@
 package joelbits;
 
-import joelbits.converters.Converter;
-import joelbits.converters.ConverterFactory;
+import joelbits.entities.ConvertedFile;
 import joelbits.formats.Formats;
+import joelbits.tasks.ConvertFile;
+import joelbits.tasks.ConverterTask;
 import joelbits.utils.DatabaseUtil;
 import joelbits.visitors.FileFormatVisitor;
 import org.apache.commons.cli.*;
@@ -12,10 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static joelbits.ConverterOptions.*;
 
@@ -96,11 +95,12 @@ public class Main {
                         Files.createDirectory(Paths.get(System.getProperty("user.dir") + "/converted"));
                     }
 
-                    String format = cmd.getOptionValue(FORMAT);
                     if (Files.isRegularFile(path)) {
-                        Converter converter = ConverterFactory.getConverter(path);
-                        converter.convert(path, cmd.getOptionValue(FORMAT));
-                        databaseUtil.executeQuery(createInsertQuery(path, format));
+                        String filePath = path.toAbsolutePath().toString();
+                        ExecutorService executorService = Executors.newSingleThreadExecutor();
+                        Future<ConvertedFile> result = executorService.submit(new ConvertFile(filePath, cmd.getOptionValue(FORMAT)));
+
+                        databaseUtil.executeQuery(createInsertQuery(result.get()));
 
                         continue;
                     }
@@ -114,8 +114,14 @@ public class Main {
                         // Use Concurrent API to enable parallel conversion of files.
                         //converter.convert(file, cmd.getOptionValue(FORMAT));
 
+                        ForkJoinPool forkJoinPool = new ForkJoinPool();
+                        ForkJoinTask<List<ConvertedFile>> task = new ConverterTask(new ArrayList<>(visitor.getPaths()), cmd.getOptionValue(FORMAT));
+                        List<ConvertedFile> result = forkJoinPool.invoke(task);
+                        for (ConvertedFile file : result) {
+                            System.out.println("conv: " + file.getFileName());
+                        }
 
-                        databaseUtil.executeQuery(createInsertQuery(path, format));
+                        databaseUtil.executeQuery(createInsertQuery(null));
                         continue;
                     }
                 }
@@ -148,11 +154,11 @@ public class Main {
         }
     }
 
-    private static String createInsertQuery(Path file, String format) {
+    private static String createInsertQuery(ConvertedFile file) {
         return "INSERT INTO FILECONVERTER.FILES(NAME, SIZE, FORMAT, CONVERTED) VALUES ('" +
-                                file.getFileName() +
-                                "', 1234.3, '" +
-                                format + "', '" +
-                                Timestamp.valueOf(LocalDateTime.now()) + "')";
+                                file.getFileName() + "', '" +
+                                file.getSize() + "', '" +
+                                file.getFormat() + "', '" +
+                                file.getConversionDate() + "')";
     }
 }

@@ -1,10 +1,11 @@
 package joelbits.converters;
 
-import java.nio.file.Path;
+import joelbits.entities.ConvertedFile;
 
 public class TXTConverter implements Converter {
     @Override
-    public void convert(Path file, String format) {
+    public ConvertedFile convert(String path, String format) {
 
+        return null;
     }
 }
