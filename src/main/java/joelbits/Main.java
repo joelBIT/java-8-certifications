@@ -101,27 +101,25 @@ public class Main {
                         Future<ConvertedFile> result = executorService.submit(new ConvertFile(filePath, cmd.getOptionValue(FORMAT)));
 
                         databaseUtil.executeQuery(createInsertQuery(result.get()));
-
                         continue;
                     }
 
                     if (Files.isDirectory(path)) {
                         FileFormatVisitor visitor = new FileFormatVisitor(Formats.getFormats());
-                        Files.walkFileTree(Paths.get(System.getProperty("user.dir") + "/converted"), visitor);
+                        Files.walkFileTree(Paths.get(path.toAbsolutePath().toString()), visitor);
                         System.out.println(visitor.getPaths());
 
                         //Converter converter = ConverterFactory.getConverter(path);
                         // Use Concurrent API to enable parallel conversion of files.
                         //converter.convert(file, cmd.getOptionValue(FORMAT));
-
+                        
                         ForkJoinPool forkJoinPool = new ForkJoinPool();
                         ForkJoinTask<List<ConvertedFile>> task = new ConverterTask(new ArrayList<>(visitor.getPaths()), cmd.getOptionValue(FORMAT));
                         List<ConvertedFile> result = forkJoinPool.invoke(task);
                         for (ConvertedFile file : result) {
-                            System.out.println("conv: " + file.getFileName());
+                            databaseUtil.executeQuery(createInsertQuery(file));
                         }
 
-                        databaseUtil.executeQuery(createInsertQuery(null));
                         continue;
                     }
                 }
@@ -156,8 +154,8 @@ public class Main {
 
     private static String createInsertQuery(ConvertedFile file) {
         return "INSERT INTO FILECONVERTER.FILES(NAME, SIZE, FORMAT, CONVERTED) VALUES ('" +
-                                file.getFileName() + "', '" +
-                                file.getSize() + "', '" +
+                                file.getFileName() + "', " +
+                                file.getSize() + ", '" +
                                 file.getFormat() + "', '" +
                                 file.getConversionDate() + "')";
     }

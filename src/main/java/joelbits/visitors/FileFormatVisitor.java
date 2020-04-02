@@ -31,8 +31,7 @@ public class FileFormatVisitor extends SimpleFileVisitor<Path> {
     @Override
     public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
         String fileName = file.getFileName().toString();
-        String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
-        System.out.println("filename " + fileName);
+        String extension = getExtension(fileName);
         if (formats.stream().anyMatch(f -> f.endsWith(extension))) {
             paths.add(file.toAbsolutePath().toString());
         }
@@ -42,5 +41,9 @@ public class FileFormatVisitor extends SimpleFileVisitor<Path> {
 
     public Collection<String> getPaths() {
         return Collections.unmodifiableCollection(paths);
+    }
+
+    private String getExtension(String fileName) {
+        return fileName.substring(fileName.lastIndexOf(".")+1).toLowerCase();
     }
 }

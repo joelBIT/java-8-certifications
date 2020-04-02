@@ -1,6 +1,7 @@
 package joelbits.converters;
 
 import joelbits.entities.ConvertedFile;
+import joelbits.exception.ConverterNotFoundException;
 import joelbits.formats.Formats;
 import org.apache.pdfbox.cos.COSDocument;
 import org.apache.pdfbox.io.RandomAccessBuffer;
@@ -32,14 +33,12 @@ public class PDFConverter implements Converter {
                 toTXT(file);
                 break;
             case PDF:
-                System.out.println("The file is already of type PDF");
-                break;
+                throw new ConverterNotFoundException("The file is already of type PDF");
             default:
-                System.out.println("Converting PDF to format " + format + " is not supported");
+                throw new ConverterNotFoundException("Converting PDF to format " + format + " is not supported");
         }
 
-        System.out.println("Finished conversion");
-        return new ConvertedFile(file.getName(), format, file.getTotalSpace(), LocalDateTime.now());
+        return new ConvertedFile(file.getName(), format, 0.0, LocalDateTime.now());
     }
 
     private void toHTML(File file) {

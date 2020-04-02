@@ -37,7 +37,7 @@ public class ConverterTask extends RecursiveTask<List<ConvertedFile>> {
                 converter.convert(filePath, format);
 
             } catch (Exception e) {
-                System.out.println("Failed to convert file due to " + e.getMessage());
+                System.out.println("Failed to convert file due to: " + e.getMessage());
             }
 
             int middle = filePaths.size()/2;
@@ -49,8 +49,6 @@ public class ConverterTask extends RecursiveTask<List<ConvertedFile>> {
     }
 
     private String getExtension(String filePath) {
-        String extension = filePath.substring(filePath.lastIndexOf(".")+1).toLowerCase();
-        System.out.println("Extension when retrieving converter is " + extension);
-        return extension;
+        return filePath.substring(filePath.lastIndexOf(".")+1).toLowerCase();
     }
 }

@@ -22,8 +22,6 @@ public class ConvertFile implements Callable<ConvertedFile> {
     }
 
     private String getExtension(String filePath) {
-        String extension = filePath.substring(filePath.lastIndexOf(".")+1).toLowerCase();
-        System.out.println("Extension when retrieving converter is " + extension);
-        return extension;
+        return filePath.substring(filePath.lastIndexOf(".")+1).toLowerCase();
     }
 }
