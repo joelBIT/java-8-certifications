@@ -18,6 +18,7 @@ import java.util.concurrent.*;
 
 import static joelbits.ConverterOptions.*;
 import static joelbits.converters.Converter.CONVERSION_DIRECTORY;
+import static joelbits.utils.DatabaseUtil.createInsertQuery;
 
 public class Main {
     private static final String BUNDLE_PROPERTIES = "AppText";
@@ -61,10 +62,10 @@ public class Main {
                     Locale locale = new Locale(cmd.getOptionValue(LANGUAGE));
                     resourceBundle = ResourceBundle.getBundle(BUNDLE_PROPERTIES, locale);
                 }
-                if ((cmd.hasOption(CONVERT_ALL) || cmd.hasOption(CONVERT)) && !cmd.hasOption(FORMAT)) {
-                    System.out.println("You must add a desired --format for the converted file(s)");
-                } else if (!(cmd.hasOption(CONVERT_ALL) || cmd.hasOption(CONVERT)) && cmd.hasOption(FORMAT)) {
-                    System.out.println("You must type either --convert <file/directory> or -convertall to convert file(s) to the supplied format");
+                if (cmd.hasOption(CONVERT) && !cmd.hasOption(FORMAT)) {
+                    System.out.println("You must add a desired --format <format> for the converted file(s)");
+                } else if (!cmd.hasOption(CONVERT) && cmd.hasOption(FORMAT)) {
+                    System.out.println("You must type --convert <file/directory> to convert file(s) to the supplied format.");
                 }
                 if (cmd.hasOption(CONVERT) && cmd.hasOption(FORMAT)) {
 
@@ -74,9 +75,6 @@ public class Main {
                         System.out.println("Supplied format is not supported. Type -formats to see which formats are supported.");
                         continue;
                     }
-
-                    // Use a BufferedReader(FileReader( for retrieving sql queries from *.sql files??
-                    // Use StreamReaders/Writers for file conversion??
 
                     String convertArgument = cmd.getOptionValue(CONVERT);
                     Path path = null;
@@ -119,40 +117,18 @@ public class Main {
                         continue;
                     }
                 }
-                if (cmd.hasOption(CONVERT_ALL) && cmd.hasOption(FORMAT)) {
-                    System.out.println("Convert all files in current directory and subdirectories to supplied format");
-                    // Convert all files with desired (and supported) format (both in current directory and subdirectories).
-                    // Use Concurrent API to enable parallel conversion of files.
-                    continue;
-                }
                 if (cmd.hasOption(LIST)) {
                     databaseUtil.listAllFiles();
                     continue;
                 }
                 if (cmd.hasOption(FORMATS)) {
                     System.out.println(Formats.getFormats());
-                    continue;
                 }
-
-                Path test = Paths.get(System.getProperty("user.dir"));
-                String[] files = test.toFile().list();
-                for (String file : files) {
-                    System.out.println(file);
-                }
-
             } catch (ParseException e) {
                 System.out.println(resourceBundle.getString("parse_error") + e.getMessage());
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
         }
-    }
-
-    private static String createInsertQuery(ConvertedFile file) {
-        return "INSERT INTO FILECONVERTER.FILES(NAME, SIZE, FORMAT, CONVERTED) VALUES ('" +
-                                file.getFileName() + "', " +
-                                file.getSize() + ", '" +
-                                file.getFormat() + "', '" +
-                                file.getConversionDate() + "')";
     }
 }

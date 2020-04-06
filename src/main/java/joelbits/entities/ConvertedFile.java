@@ -36,4 +36,12 @@ public class ConvertedFile {
     public String toString() {
         return fileName + " of size " + size + " was converted to format " + format + " at date and time " + conversionDate;
     }
+
+    public static class NotConvertedFile extends ConvertedFile {
+        public static final boolean isConverted = false;
+
+        public NotConvertedFile(String fileName, String format, double size, LocalDateTime conversionDate) {
+            super(fileName, format, size, conversionDate);
+        }
+    }
 }

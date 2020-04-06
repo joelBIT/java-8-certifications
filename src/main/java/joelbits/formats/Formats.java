@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum Formats {
-    PDF("pdf"), TXT("txt"), DOC("doc"), HTML("html");
+    PDF("pdf"), TXT("txt"), DOC("doc"), HTML("html"), JPEG("jpeg"), JPG("jpg"), PNG("png"), GIF("gif"), BMP("bmp");
     private final String format;
 
     Formats(String format) {

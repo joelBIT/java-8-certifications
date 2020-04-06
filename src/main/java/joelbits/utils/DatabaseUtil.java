@@ -1,5 +1,6 @@
 package joelbits.utils;
 
+import joelbits.entities.ConvertedFile;
 import joelbits.properties.DatabaseProperties;
 
 import java.sql.*;
@@ -22,6 +23,9 @@ public final class DatabaseUtil {
 
         properties = new DatabaseProperties();
         connection = DriverManager.getConnection(properties.getURL());
+
+        // Use a BufferedReader(FileReader( for retrieving sql queries from *.sql files??
+        // Use StreamReaders/Writers for file conversion??
 
         if (!schemaExists(connection.getMetaData())) {
             try(Statement statement = connection.createStatement()) {
@@ -68,5 +72,13 @@ public final class DatabaseUtil {
                 System.out.println(result.getInt(1) + " " + result.getString(2) + " " + result.getDouble(3) + " " + result.getString(4) + " " + result.getTimestamp(5));
             }
         }
+    }
+
+    public static synchronized String createInsertQuery(ConvertedFile file) {
+        return "INSERT INTO FILECONVERTER.FILES(NAME, SIZE, FORMAT, CONVERTED) VALUES ('" +
+                file.getFileName() + "', " +
+                file.getSize() + ", '" +
+                file.getFormat() + "', '" +
+                file.getConversionDate() + "')";
     }
 }
