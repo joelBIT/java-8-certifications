@@ -3,7 +3,7 @@ package joelbits;
 import joelbits.entities.ConvertedFile;
 import joelbits.formats.Formats;
 import joelbits.tasks.ConvertFile;
-import joelbits.tasks.ConverterTask;
+import joelbits.tasks.ConverterAction;
 import joelbits.utils.DatabaseUtil;
 import joelbits.visitors.FileFormatVisitor;
 import org.apache.commons.cli.*;
@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static joelbits.ConverterOptions.*;
+import static joelbits.converters.Converter.CONVERSION_DIRECTORY;
 
 public class Main {
     private static final String BUNDLE_PROPERTIES = "AppText";
@@ -91,8 +92,8 @@ public class Main {
                         continue;
                     }
 
-                    if (!Files.exists(Paths.get(System.getProperty("user.dir") + "/converted"))) {
-                        Files.createDirectory(Paths.get(System.getProperty("user.dir") + "/converted"));
+                    if (!Files.exists(Paths.get(System.getProperty("user.dir") + CONVERSION_DIRECTORY))) {
+                        Files.createDirectory(Paths.get(System.getProperty("user.dir") + CONVERSION_DIRECTORY));
                     }
 
                     if (Files.isRegularFile(path)) {
@@ -107,16 +108,11 @@ public class Main {
                     if (Files.isDirectory(path)) {
                         FileFormatVisitor visitor = new FileFormatVisitor(Formats.getFormats());
                         Files.walkFileTree(Paths.get(path.toAbsolutePath().toString()), visitor);
-                        System.out.println(visitor.getPaths());
-
-                        //Converter converter = ConverterFactory.getConverter(path);
-                        // Use Concurrent API to enable parallel conversion of files.
-                        //converter.convert(file, cmd.getOptionValue(FORMAT));
                         
                         ForkJoinPool forkJoinPool = new ForkJoinPool();
-                        ForkJoinTask<List<ConvertedFile>> task = new ConverterTask(new ArrayList<>(visitor.getPaths()), cmd.getOptionValue(FORMAT));
-                        List<ConvertedFile> result = forkJoinPool.invoke(task);
-                        for (ConvertedFile file : result) {
+                        ConverterAction task = new ConverterAction(new ArrayList<>(visitor.getPaths()), cmd.getOptionValue(FORMAT));
+                        forkJoinPool.invoke(task);
+                        for (ConvertedFile file : task.getConvertedFiles()) {
                             databaseUtil.executeQuery(createInsertQuery(file));
                         }
 

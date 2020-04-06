@@ -58,7 +58,7 @@ public class PDFConverter implements Converter {
             parser.parse();
 
             try (COSDocument document = parser.getDocument(); PrintWriter writer = new PrintWriter(Paths
-                    .get(System.getProperty("user.dir") + "/converted/testing.txt")
+                    .get(System.getProperty("user.dir") + CONVERSION_DIRECTORY + file.getName() + ".txt")
                     .toAbsolutePath().toString(), "utf-8"); PDDocument pdf = new PDDocument(document)) {
                 PDFTextStripper pdfStripper = new PDFTextStripper();
                 String parsedText = pdfStripper.getText(pdf);
