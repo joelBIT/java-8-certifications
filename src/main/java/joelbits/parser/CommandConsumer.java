@@ -15,14 +15,8 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 import static joelbits.ConverterOptions.*;
@@ -37,41 +31,27 @@ public class CommandConsumer implements Consumer<CommandLine> {
     private final HelpFormatter formatter = new HelpFormatter();
     private final Options options = ConverterOptions.getConvertOptions();
     private ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE_JAVA);
+    private final Map<String, Consumer<String>> commands = new HashMap<>();
+    private final Map<String, VoidCommand> voidCommands = new HashMap<>();
+    private static final String MISSING_FORMAT = "missing_format";
+    private static final String MISSING_CONVERT = "missing_convert";
 
     public CommandConsumer() throws Exception {
         databaseUtil = DatabaseUtil.getInstance();
+
+        initializeCommands();
     }
 
     @Override
     public void accept(CommandLine cmd) {
         try {
-            if (cmd.hasOption(LIST)) {
-                try {
-                    databaseUtil.listAllFiles();
-                } catch (SQLException e) {
-                    System.out.println(e.getMessage());
-                }
-            }
-            if (cmd.hasOption(FORMATS)) {
-                System.out.println(Formats.getFormats());
-            }
-            if (cmd.hasOption(EXIT)) {
-                System.out.println(resourceBundle.getString("exiting"));
-                System.exit(0);
-            }
-            if (cmd.hasOption(HELP)) {
-                formatter.printHelp("fileConverter", options);
-            }
-            if (cmd.hasOption(LANGUAGE)) {
-                Locale locale = new Locale(cmd.getOptionValue(LANGUAGE));
-                resourceBundle = ResourceBundle.getBundle(BUNDLE_PROPERTIES, locale);
-            }
 
             if (cmd.hasOption(CONVERT) && !cmd.hasOption(FORMAT)) {
-                System.out.println("You must add a desired --format <format> for the converted file(s)");
-            } else if (!cmd.hasOption(CONVERT) && cmd.hasOption(FORMAT)) {
-                System.out.println("You must type --convert <file/directory> to convert file(s) to the supplied format.");
+                voidCommands.get(MISSING_FORMAT).execute();
+            } else if (cmd.hasOption(FORMAT) && !cmd.hasOption(CONVERT)) {
+                voidCommands.get(MISSING_CONVERT).execute();
             }
+
             if (cmd.hasOption(CONVERT) && cmd.hasOption(FORMAT)) {
 
                 try {
@@ -122,8 +102,35 @@ public class CommandConsumer implements Consumer<CommandLine> {
                     return;
                 }
             }
-        } catch (Exception e) {
-            System.out.println("Could not consume command(s): " + e.getMessage());
+
+
+            if (cmd.hasOption(LIST)) {
+                voidCommands.get(LIST).execute();
+            } else if (cmd.hasOption(FORMATS)) {
+                voidCommands.get(FORMATS).execute();
+            } else if (cmd.hasOption(EXIT)) {
+                voidCommands.get(EXIT).execute();
+            } else if (cmd.hasOption(HELP)) {
+                voidCommands.get(HELP).execute();
+            } else if (cmd.hasOption(LANGUAGE)) {
+                commands.get(LANGUAGE).accept(cmd.getOptionValue(LANGUAGE));
+            }
+
+            } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
+    }
+
+    private void initializeCommands() {
+        VoidCommand exitMessage = () -> System.out.println(resourceBundle.getString("exiting"));
+        voidCommands.put(EXIT, exitMessage.andThen(() -> System.exit(0)));
+        voidCommands.put(FORMATS, () -> System.out.println(Formats.getFormats()));
+        voidCommands.put(HELP, () -> formatter.printHelp("fileConverter", options));
+        voidCommands.put(LIST, databaseUtil::listAllFiles);
+        voidCommands.put(MISSING_FORMAT, () -> System.out.println("You must add a desired --format <format> for the converted file(s)"));
+        voidCommands.put(MISSING_CONVERT, () -> System.out.println("You must type --convert <file/directory> to convert file(s) to the supplied format."));
+
+        commands.put(LANGUAGE, s -> resourceBundle = ResourceBundle.getBundle(BUNDLE_PROPERTIES, new Locale(s)));
+
     }
 }

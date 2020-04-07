@@ -89,13 +89,4 @@ public class PDFConverter implements Converter {
             }
         }
     }
-
-    private String getDestinationFilePath(File file, String format) {
-        return Paths.get(System.getProperty("user.dir") + CONVERSION_DIRECTORY + getFileName(file) + "." + format)
-                .toAbsolutePath().toString();
-    }
-
-    private String getFileName(File file) {
-        return file.getName().substring(0, file.getName().lastIndexOf("."));
-    }
 }

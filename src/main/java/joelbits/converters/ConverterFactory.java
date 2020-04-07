@@ -13,6 +13,7 @@ public final class ConverterFactory {
                 return new PDFConverter();
             case HTML:
             case TXT:
+                return new TXTConverter();
             default:
                 throw new ConverterNotFoundException("Could not find converter for " + extension);
         }
