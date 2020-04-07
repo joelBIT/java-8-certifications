@@ -8,6 +8,8 @@ import java.util.ListResourceBundle;
  * particular application.
  */
 public class AppText extends ListResourceBundle {
+    public static final String BUNDLE_PROPERTIES = "AppText";
+    public static final String BUNDLE_JAVA = "joelbits.properties." + BUNDLE_PROPERTIES;
 
     @Override
     protected Object[][] getContents() {

@@ -2,6 +2,7 @@ package joelbits.entities;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class ConvertedFile {
     private final String fileName;
@@ -37,11 +38,17 @@ public class ConvertedFile {
         return fileName + " of size " + size + " was converted to format " + format + " at date and time " + conversionDate;
     }
 
-    public static class NotConvertedFile extends ConvertedFile {
-        public static final boolean isConverted = false;
+    @Override
+    public int hashCode() {
+        return fileName.length() + conversionDate.getNanos();
+    }
 
-        public NotConvertedFile(String fileName, String format, double size, LocalDateTime conversionDate) {
-            super(fileName, format, size, conversionDate);
+    @Override
+    public boolean equals(Object object) {
+        if (object instanceof ConvertedFile) {
+            ConvertedFile file = (ConvertedFile) object;
+            return Objects.equals(this.fileName, file.fileName) && Objects.equals(this.conversionDate.getNanos(), file.conversionDate.getNanos());
         }
+        return false;
     }
 }

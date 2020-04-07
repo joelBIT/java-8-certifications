@@ -3,7 +3,7 @@ package joelbits;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
-class ConverterOptions {
+public class ConverterOptions {
     public static final String EXIT = "exit";
     public static final String HELP = "help";
     public static final String LIST = "list";
@@ -12,7 +12,7 @@ class ConverterOptions {
     public static final String FORMAT = "format";
     public static final String FORMATS = "formats";
 
-    static Options getConvertOptions() {
+    public static synchronized Options getConvertOptions() {
         Options options = new Options();
         options.addOption(new Option(FORMATS, "Prints the supported formats."));
         options.addOption(new Option(HELP, "Prints this message."));

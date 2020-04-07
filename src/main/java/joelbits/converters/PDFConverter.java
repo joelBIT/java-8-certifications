@@ -57,7 +57,7 @@ public class PDFConverter implements Converter {
 
     private void toHTML(File file) throws IOException, ParserConfigurationException {
         try (PDDocument pdf = PDDocument.load(file); Writer output =
-                new PrintWriter(getDestinationFilePath(file, HTML.name()), "utf-8")) {
+                new PrintWriter(getDestinationFilePath(file, HTML.getFormat()), "utf-8")) {
 
             new PDFDomTree().writeText(pdf, output);
         }
@@ -69,7 +69,7 @@ public class PDFConverter implements Converter {
             parser.parse();
 
             try (COSDocument document = parser.getDocument(); PrintWriter writer =
-                    new PrintWriter(getDestinationFilePath(file, TXT.name())); PDDocument pdf = new PDDocument(document)) {
+                    new PrintWriter(getDestinationFilePath(file, TXT.getFormat())); PDDocument pdf = new PDDocument(document)) {
 
                 writer.print(new PDFTextStripper().getText(pdf));
             }
