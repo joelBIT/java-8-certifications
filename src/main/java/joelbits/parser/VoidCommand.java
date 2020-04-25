@@ -1,6 +1,5 @@
 package joelbits.parser;
 
-import java.sql.SQLException;
 import java.util.Objects;
 
 @FunctionalInterface

@@ -15,14 +15,12 @@ public class Main {
         try {
             commandParser = new CommandParser();
         } catch (Exception e) {
-            System.out.println(" Could not create command parser: " + e.getMessage());
-            System.exit(1);
+            exitApplication(" Could not create command parser: " + e.getMessage());
         }
 
         Console console = System.console();
         if (console == null) {
-            System.out.println("Console not available. Exiting...");
-            System.exit(1);
+            exitApplication("Console not available. Exiting...");
         }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE_JAVA);
@@ -38,5 +36,10 @@ public class Main {
                 System.out.println(e.getMessage());
             }
         }
+    }
+
+    private static void exitApplication(String message) {
+        System.out.println(message);
+        System.exit(1);
     }
 }

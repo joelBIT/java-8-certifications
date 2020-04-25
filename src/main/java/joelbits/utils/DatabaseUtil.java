@@ -24,9 +24,6 @@ public final class DatabaseUtil {
         properties = new DatabaseProperties();
         connection = DriverManager.getConnection(properties.getURL());
 
-        // Use a BufferedReader(FileReader( for retrieving sql queries from *.sql files??
-        // Use StreamReaders/Writers for file conversion??
-
         if (!schemaExists(connection.getMetaData())) {
             try(Statement statement = connection.createStatement()) {
                 statement.execute("CREATE SCHEMA " + SCHEMA);

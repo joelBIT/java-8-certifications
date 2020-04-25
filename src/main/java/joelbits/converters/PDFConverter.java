@@ -27,6 +27,8 @@ import static joelbits.formats.Formats.TXT;
  * Converts PDF documents to supplied format, if supported.
  */
 public class PDFConverter implements Converter {
+    private static final int DPI = 300;
+
     @Override
     public ConvertedFile convert(String path, String format) throws Exception {
         File file = Paths.get(path).toFile();
@@ -84,8 +86,8 @@ public class PDFConverter implements Converter {
             PDFRenderer pdfRenderer = new PDFRenderer(pdf);
 
             for (int page = 0; page < pdf.getNumberOfPages(); ++page) {
-                BufferedImage bim = pdfRenderer.renderImageWithDPI(page, 300, ImageType.RGB);
-                ImageIOUtil.writeImage(bim, format, outputStream, 300);
+                BufferedImage bim = pdfRenderer.renderImageWithDPI(page, DPI, ImageType.RGB);
+                ImageIOUtil.writeImage(bim, format, outputStream, DPI);
             }
         }
     }

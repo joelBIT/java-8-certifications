@@ -11,10 +11,12 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -80,25 +82,12 @@ public class CommandConsumer implements Consumer<CommandLine> {
                 }
 
                 if (Files.isRegularFile(path)) {
-                    String filePath = path.toAbsolutePath().toString();
-                    ExecutorService executorService = Executors.newSingleThreadExecutor();
-                    Future<ConvertedFile> result = executorService.submit(new ConvertFile(filePath, cmd.getOptionValue(FORMAT)));
-
-                    databaseUtil.executeQuery(createInsertQuery(result.get()));
+                    persistFile(cmd, path);
                     return;
                 }
 
                 if (Files.isDirectory(path)) {
-                    FileFormatVisitor visitor = new FileFormatVisitor(Formats.getFormats());
-                    Files.walkFileTree(Paths.get(path.toAbsolutePath().toString()), visitor);
-
-                    ForkJoinPool forkJoinPool = new ForkJoinPool();
-                    ConverterAction task = new ConverterAction(new ArrayList<>(visitor.getPaths()), cmd.getOptionValue(FORMAT));
-                    forkJoinPool.invoke(task);
-                    for (ConvertedFile file : task.getConvertedFiles()) {
-                        databaseUtil.executeQuery(createInsertQuery(file));
-                    }
-
+                    persistFilesInDirectories(cmd, path);
                     return;
                 }
             }
@@ -118,6 +107,26 @@ public class CommandConsumer implements Consumer<CommandLine> {
 
             } catch (Exception e) {
             System.out.println(e.getMessage());
+        }
+    }
+
+    private void persistFile(CommandLine cmd, Path path) throws SQLException, InterruptedException, ExecutionException {
+        String filePath = path.toAbsolutePath().toString();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Future<ConvertedFile> result = executorService.submit(new ConvertFile(filePath, cmd.getOptionValue(FORMAT)));
+
+        databaseUtil.executeQuery(createInsertQuery(result.get()));
+    }
+
+    private void persistFilesInDirectories(CommandLine cmd, Path path) throws IOException, SQLException {
+        FileFormatVisitor visitor = new FileFormatVisitor(Formats.getFormats());
+        Files.walkFileTree(Paths.get(path.toAbsolutePath().toString()), visitor);
+
+        ForkJoinPool forkJoinPool = new ForkJoinPool();
+        ConverterAction task = new ConverterAction(new ArrayList<>(visitor.getPaths()), cmd.getOptionValue(FORMAT));
+        forkJoinPool.invoke(task);
+        for (ConvertedFile file : task.getConvertedFiles()) {
+            databaseUtil.executeQuery(createInsertQuery(file));
         }
     }
 
